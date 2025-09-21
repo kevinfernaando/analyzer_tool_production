@@ -3,6 +3,13 @@ import yaml
 import streamlit as st
 import streamlit_authenticator as stauth
 
+# --- helpers ---
+def to_plain_dict(obj):
+    """Recursively convert SecretsDict (or any mapping) to a plain dict."""
+    if hasattr(obj, "items"):
+        return {k: to_plain_dict(v) for k, v in obj.items()}
+    return obj
+
 # ---------- Load YAML ----------
 # CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.yaml")
 # with open(CONFIG_PATH, "r") as f:
@@ -11,24 +18,27 @@ import streamlit_authenticator as stauth
 # credentials = config["credentials"]
 # cookie_cfg = config["cookie"]
 if "credentials" in st.secrets:
-    credentials = st.secrets["credentials"]
-    cookie_cfg = st.secrets.get("cookie", {})
+    credentials = to_plain_dict(st.secrets["credentials"])
+    cookie_cfg  = to_plain_dict(st.secrets.get("cookie", {}))
 else:
-    # Fallback to local YAML (optional for local dev)
-    with open("config.yaml") as f:
+    with open("config.yaml", "r") as f:
         cfg = yaml.safe_load(f)
     credentials = cfg["credentials"]
-    cookie_cfg   = cfg["cookie"]
+    cookie_cfg  = cfg["cookie"]
+
+# Safe defaults + type casts
+cookie_name  = cookie_cfg.get("name", "dividend_auth")
+cookie_key   = cookie_cfg.get("key",  "CHANGE_ME")
+cookie_days  = int(cookie_cfg.get("expiry_days", 7))
 
 
 # ---------- Authenticator ----------
 auth = stauth.Authenticate(
-    credentials,
-    cookie_cfg["name"],
-    cookie_cfg["key"],
-    cookie_cfg["expiry_days"],
+    credentials,     # must be a mutable plain dict
+    cookie_name,
+    cookie_key,
+    cookie_days,
 )
-
 
 # ---------- Your app (protected area) ----------
 def render_app():
