@@ -295,46 +295,23 @@ st.set_page_config(page_title="Dividend Analytics", page_icon="📈")
 
 # name, auth_status, username = auth.login("Sign in", "main")
 
-fields = {
-    "Form name": "Sign in",
-    "Username": "Email",
-    "Password": "Password",
-    "Login": "Sign in",
-}
+# Render the login widget in the UI:
+fields = {"Form name": "Sign in", "Username": "Email", "Password": "Password", "Login": "Sign in"}
+auth.login("main", fields=fields)   # returns None by design in new API
 
-name, auth_status, username = auth.login(
-    "main", fields=fields  # location  # new required dict
-)
+# Read the results from session_state instead of unpacking
+name        = st.session_state.get("name")
+auth_status = st.session_state.get("authentication_status")
+username    = st.session_state.get("username")
 
 if auth_status is False:
     st.error("Invalid email or password.")
 elif auth_status is None:
     st.info("Please enter your email and password to continue.")
 elif auth_status:
-    # Sidebar user panel
     with st.sidebar:
         st.caption("Signed in as:")
         st.subheader(credentials["usernames"][username]["name"])
-        st.text(username)  # email as username
+        st.text(username)
         auth.logout("Logout", "sidebar")
-
-        # Optional: self-serve password reset (persists to YAML)
-        with st.expander("Account"):
-            try:
-                if auth.reset_password(username=username, location="main"):
-                    st.success("Password updated.")
-                    # Persist the new hash back to YAML:
-                    # `auth.credentials` now contains updated hashes
-                    config["credentials"] = auth.credentials
-                    try:
-                        with open(CONFIG_PATH, "w") as f:
-                            yaml.safe_dump(config, f, sort_keys=False)
-                        st.caption("New password saved to config.yaml.")
-                    except Exception as e:
-                        st.warning(
-                            f"Password changed for this session. Could not write config.yaml: {e}"
-                        )
-            except Exception as e:
-                st.warning(f"Password reset not available: {e}")
-
     render_app()
