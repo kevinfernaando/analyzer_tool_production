@@ -12,6 +12,7 @@ events.csv
 notebook.ipynb
 result_temp.csv
 aapl_post_div.csv
+config.yaml
 
 # OS / IDE noise
 .DS_Store
