@@ -1,0 +1,16 @@
+credentials:
+  usernames:
+    tylerborders@gmail.com:
+      email: tylerborders@gmail.com
+      name: Tyler
+      password: "$2b$12$5egn6IX5X19pVpQuGQg7/.rIT6/f7MXnAiFyNsPdAa/rdG858nUea" # bcrypt hash
+    analyst:
+      email: analyst@example.com
+      name: Analyst
+      password: "$2b$12$DIFfERENTEXAMPLEHASHoI9Nf7Qb9EIOgMvLQKk1kY."
+cookie:
+  name: dividend_auth
+  key: ${AUTH_COOKIE_KEY} # pull from environment or .streamlit/secrets.toml
+  expiry_days: 7
+preauthorized:
+  emails: []

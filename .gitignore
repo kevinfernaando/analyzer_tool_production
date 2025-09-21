@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+env/
+venv/
+.ipynb_checkpoints/
+doodles.ipynb
+app_tempp.py
+doodles.ipynb
+events.csv
+notebook.ipynb
+result_temp.csv
+aapl_post_div.csv
+
+# OS / IDE noise
+.DS_Store
+.vscode/
+.idea/
