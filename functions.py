@@ -463,28 +463,12 @@ def get_data_new(symbol, year, recovery_window=1, start=None, end=None):
     hist_data = get_hist(symbol, start, end)  # <-- your API call
     div_data = get_div(symbol, start, end)  # <-- your API call
     df = pd.merge(hist_data, div_data, left_index=True, right_index=True, how="outer")
+    df["entry_date"] = pd.to_datetime(df.index.to_series().shift(1))
     df["entry_price_t_1"] = df["close"].shift(1)
     df["entry_price_t_1_min15"] = df["close"].shift(1) - 0.15
     df["entry_price_t_1_plus15"] = df["close"].shift(1) + 0.15
-    df["entry_price_6040"] = 0.6 * df["close"].shift(1) + 0.4 * df["open"]
-    df["entry_price_7030"] = 0.7 * df["close"].shift(1) + 0.3 * df["open"]
-
-    # # Entry price depending on method
-    # if method == "t-1":
-    #     df["entry_date"] = pd.to_datetime(df.index.to_series().shift(1))
-    #     df["entry_price"] = df["close"].shift(1)
-    # elif method == "t-1-15":
-    #     df["entry_date"] = pd.to_datetime(df.index.to_series().shift(1))
-    #     df["entry_price"] = df["close"].shift(1) - 0.15
-    # elif method == "t-1+15":
-    #     df["entry_date"] = pd.to_datetime(df.index.to_series().shift(1))
-    #     df["entry_price"] = df["close"].shift(1) + 0.15
-    # elif method == "60/40":
-    #     df["entry_date"] = pd.to_datetime(df.index.to_series().shift(1))
-    #     df["entry_price"] = 0.6 * df["close"].shift(1) + 0.4 * df["open"]
-    # elif method == "70/30":
-    #     df["entry_date"] = pd.to_datetime(df.index.to_series().shift(1))
-    #     df["entry_price"] = 0.7 * df["close"].shift(1) + 0.3 * df["open"]
+    df["entry_price_6040"] = 0.6 * df["close"].shift(1) + 0.4 * df["low"]
+    df["entry_price_7030"] = 0.7 * df["close"].shift(1) + 0.3 * df["low"]
 
     # Add recovery window boundaries
     df["end_window_date"] = df.index.to_series().shift(-recovery_window)
@@ -539,13 +523,7 @@ def backtest_new(symbol, method, recovery_window, data, plot=False):
             recovery_times.append(recovery_time)
         return np.round(np.mean(recovery_times), 2)
 
-    # data = get_data(
-    #     symbol=symbol,
-    #     start=start,
-    #     end=end,
-    #     recovery_window=recovery_window,
-    #     # method=method,
-    # )
+
     events = data.dropna(subset=["dividend", "end_window_date"])
 
     is_recover_list = []
@@ -557,7 +535,7 @@ def backtest_new(symbol, method, recovery_window, data, plot=False):
     entry_price_pairs = {
         "t-1": "entry_price_t_1",
         "t-1-15": "entry_price_t_1_min15",
-        "t-1+15": "entry_price_t_1",
+        "t-1+15": "entry_price_t_1_plus15",
         "60/40": "entry_price_6040",
         "70/30": "entry_price_7030",
     }
