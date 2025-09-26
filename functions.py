@@ -22,7 +22,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-API_KEY = "oKPXvYaSX1u3bzzowndnZAhoG4EaZx6v"
+API_KEY = "oKA3BVZgLfafjoDY5g5QXif92Pb5Z2s4"
 
 
 def year_delta(year):
@@ -548,7 +548,7 @@ def backtest_new(symbol, method, recovery_window, data, plot=False):
         window_data = data.loc[event.name : event["end_window_date"]].copy()
 
         # Recovery test = High ≥ Entry
-        window_data["is_recover"] = window_data["high"] >= entry_price
+        window_data["is_recover"] = window_data["high"] > entry_price
         is_recover = window_data["is_recover"].any()
 
         if is_recover:
@@ -620,6 +620,7 @@ def backtest_new(symbol, method, recovery_window, data, plot=False):
     )
     avg_recovery_days = np.nanmean(recovery_days_list)
     avg_overrun = np.nanmean(overrun_list)
+    med_overrun = np.nanmedian(overrun_list)
     avg_days_to_overrun = np.nanmean(days_to_overrun_list)
     avg_recovery_times = get_recovery_time(events)
 
@@ -672,7 +673,7 @@ def backtest_new(symbol, method, recovery_window, data, plot=False):
         "Recovery %": recovery_pct,
         "Avg Days to Recover": avg_recovery_days,
         "Avg Time Above Recovery (in Minutes)": avg_recovery_times,
-        "Avg Overrun %": avg_overrun,
+        "Median Overrun %": med_overrun,
         "Avg Days to Overrun": avg_days_to_overrun,
     }
     result.update(final_trading_session)
