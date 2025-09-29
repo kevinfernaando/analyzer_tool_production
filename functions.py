@@ -677,7 +677,7 @@ def backtest_new(symbol, method, recovery_window, data, plot=False):
         "Total Events": total_events,
         "Recovery %": recovery_pct,
         "Avg Days to Recover": avg_recovery_days,
-        "Avg Time Above Recovery (in Minutes)": avg_recovery_times,
+        "Avg Minutes Above Recovery": avg_recovery_times,
         "Median Overrun %": med_overrun,
         "Avg Days to Overrun": avg_days_to_overrun,
     }
@@ -685,7 +685,7 @@ def backtest_new(symbol, method, recovery_window, data, plot=False):
 
     cummulative_recovery_df = pd.DataFrame(cummulative_recovery_list).mean()
     cummulative_recovery_df.index = list(map(lambda x: f'T{x} Rec %', cummulative_recovery_df.index.values))
-    cummulative_recovery_dict = cummulative_recovery_df.round(2).to_dict()
+    cummulative_recovery_dict = cummulative_recovery_df.mul(100).round(2).to_dict()
     
     result.update(cummulative_recovery_dict)
 
