@@ -139,6 +139,7 @@ def render_app():
         year = st.number_input(
             "Years of Backtest",
             min_value=1,
+            max_value=25,
             value=1,
             step=1,
             key="year",

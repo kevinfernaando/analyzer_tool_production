@@ -1,0 +1,52 @@
+details fields
+- event date
+- entry price
+- is recover
+- recovery date
+- recovery day(s)
+- recovery price
+- peak date
+- peak price
+- overrun pct
+
+
+XRAY - Avg Days to Median % Overrun:
+
+Results (4 events)
+• Events used (ex-dates): 2024-09-27, 2024-12-27, 2025-03-28, 2025-06-27
+• Median % Overrun (M): 1.8845%
+• (Computed as median of the four event peaks: 3.5081%, 0.2610%, 0.0000%, 5.8125% → middle two average = 1.8845%.)
+• Time to Median: among events that reached M, median = 1 day (mean = 1 day).
+• Reach Rate: 50% (2 of 4 events reached ≥ M within T0→T+4).
+
+Per-event quick summary
+
+(Full per-event detail is in the CSV/visible table.)
+1. Ex-date 2024-09-27 — T-1 Close 26.51
+• Daily overruns (T0→T+4): 3.508%, 2.150%, 2.452%, 0.000%, 0.000%
+• Peak = 3.508% (earliest at T0)
+• Reached M (1.8845%) at T0 → Tᵢ = 0
+
+2. Ex-date 2024-12-27 — T-1 Close 19.16
+• Daily overruns: 0.000%, 0.000%, 0.000%, 0.261%, 0.000%
+• Peak = 0.261% (T+3)
+• Did not reach M → Tᵢ = n/a
+
+3. Ex-date 2025-03-28 — T-1 Close 15.64
+• Daily overruns: 0.000%, 0.000%, 0.000%, 0.000%, 0.000%
+• Peak = 0.000% (T0)
+• Did not reach M → Tᵢ = n/a
+
+4. Ex-date 2025-06-27 — T-1 Close 16.00
+• Daily overruns: 0.000%, 0.000%, 5.812%, 4.562%, 1.875%
+• Peak = 5.812% (T+2)
+• Reached M at T+2 → Tᵢ = 2
+
+Proof (one event, worked by hand)
+
+Take 2024-09-27 (Ex-date).
+• T-1 Close (Target) = 26.51 (on 2024-09-26).
+• T0 High = 27.440001 ⇒
+O_0 = (27.440001 - 26.51) / 26.51 \times 100\% = 3.5081\% (≥ 0, keep).
+• By comparison to M = 1.8845%, it crosses at T0, so Tᵢ = 0.
+(You can verify the rest of the days and events in the attached CSV—the same arithmetic is applied row-by-row.)
