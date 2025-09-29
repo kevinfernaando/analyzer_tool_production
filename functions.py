@@ -531,6 +531,8 @@ def backtest_new(symbol, method, recovery_window, data, plot=False):
     overrun_list = []
     days_to_overrun_list = []
     trading_session_list = []
+    cummulative_recovery_list = []
+    
 
     entry_price_pairs = {
         "t-1": "entry_price_t_1",
@@ -588,6 +590,9 @@ def backtest_new(symbol, method, recovery_window, data, plot=False):
             overrun = np.nan
             days_to_overrun = np.nan
 
+        is_rec_days = [window_data.iloc[i]['high'] > entry_price for i in range(5)]
+        cummulative_recovery_list.append(is_rec_days)
+        
         # Store results
         is_recover_list.append(is_recover)
         recovery_days_list.append(recovery_days)
@@ -677,5 +682,12 @@ def backtest_new(symbol, method, recovery_window, data, plot=False):
         "Avg Days to Overrun": avg_days_to_overrun,
     }
     result.update(final_trading_session)
+
+    cummulative_recovery_df = pd.DataFrame(cummulative_recovery_list).mean()
+    cummulative_recovery_df.index = list(map(lambda x: f'T{x} Rec %', cummulative_recovery_df.index.values))
+    cummulative_recovery_dict = cummulative_recovery_df.round(2).to_dict()
+    
+    result.update(cummulative_recovery_dict)
+
     return result
     # return (recovery_pct, avg_recovery_days, avg_overrun, avg_days_to_overrun)
