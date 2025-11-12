@@ -21,7 +21,6 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-
 API_KEY = "oKA3BVZgLfafjoDY5g5QXif92Pb5Z2s4"
 
 
@@ -476,25 +475,27 @@ def get_data_new(symbol, year, recovery_window=1, start=None, end=None):
 
     events = df.dropna(subset=["dividend", "end_window_date"])
     for event_date in events.index:
-        temp = pd.DataFrame(
-            requests.get(
-                f"https://financialmodelingprep.com/stable/historical-chart/15min?symbol={symbol}&from={event_date.date()}&to={event_date.date()}&apikey={API_KEY}"
-            ).json()
-        )
-        temp["date"] = pd.to_datetime(temp.date)
-        temp = temp.set_index("date").sort_index()
-        temp_new = temp.iloc[1:].reset_index(drop=True)
+        try:
+            temp = pd.DataFrame(
+                requests.get(
+                    f"https://financialmodelingprep.com/stable/historical-chart/15min?symbol={symbol}&from={event_date.date()}&to={event_date.date()}&apikey={API_KEY}"
+                ).json()
+            )
+            temp["date"] = pd.to_datetime(temp.date)
+            temp = temp.set_index("date").sort_index()
+            temp_new = temp.iloc[1:].reset_index(drop=True)
 
-        open = temp_new.open.iloc[0]
-        close = temp_new.close.iloc[-1]
-        low = temp_new.low.min()
-        high = temp_new.high.max()
+            open = temp_new.open.iloc[0]
+            close = temp_new.close.iloc[-1]
+            low = temp_new.low.min()
+            high = temp_new.high.max()
 
-        df.loc[event_date, "open"] = open
-        df.loc[event_date, "close"] = close
-        df.loc[event_date, "low"] = low
-        df.loc[event_date, "high"] = high
-
+            df.loc[event_date, "open"] = open
+            df.loc[event_date, "close"] = close
+            df.loc[event_date, "low"] = low
+            df.loc[event_date, "high"] = high
+        except:
+            continue
     return df
 
 
