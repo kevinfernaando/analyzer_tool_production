@@ -45,7 +45,7 @@ def render_app():
     # st.title("Dividend Analytics 📈")
     # st.write("You are logged in. Put the existing app here.")
     import pandas as pd
-    from functions import backtest_new as backtest, get_data_new as get_data
+    from functions import backtest_massive as backtest, get_data_massive as get_data
     from pathlib import Path
 
     st.set_page_config(page_title="Dividend Analytics", page_icon="📈")
@@ -193,46 +193,50 @@ def render_app():
             st.rerun()
 
         progress_bar = st.progress(0, text="Starting analysis...")
-        method_code = ["t-1", "t-1-15", "t-1+15", "60/40", "70/30"]
+        method_code = ["t-1", "60/40", "70/30"]
         method_name = [
             "T-1 Close Full Recovery",
-            "T-1 Close Minus 15 Ticks",
-            "T-1 Close Plus 15 Ticks",
             "Double Tranche 60/40 (T-1C, T-0L)",
             "Double Tranche 70/30 (T-1C, T-0L)",
         ]
 
         method_dict = dict(zip(method_code, method_name))
-        methods = ["t-1+15", "t-1", "t-1-15", "70/30", "60/40"]
+        methods = ["t-1", "60/40", "70/30"]
         if st.session_state.year_disabled:
             year = None
         results = []
 
         try:
-            data = get_data(
-                symbol=symbol,
-                year=year,
-                recovery_window=recovery_window,
-                start=start_date,
-                end=end_date,
-            )
+            # data = get_data(
+            #     symbol=symbol,
+            #     year=year,
+            #     recovery_window=recovery_window,
+            #     start=start_date,
+            #     end=end_date,
+            # )
+            intraday_data, per_day, div_data = get_data(symbol=symbol, year=year, start=start_date, end=end_date)
+            
             for i, method in enumerate(methods, 1):
                 progress_bar.progress(
                     i / len(methods), text=f"Calculating {method} method"
                 )
+                # res = backtest(
+                #     symbol=symbol,
+                #     method=method,
+                #     recovery_window=recovery_window,
+                #     data=data,
+                # )
                 res = backtest(
-                    symbol=symbol,
                     method=method,
-                    recovery_window=recovery_window,
-                    data=data,
+                    per_day=per_day,
+                    intraday_data=intraday_data,
+                    div_data=div_data,
                 )
                 results.append(res)
             results_df = pd.DataFrame(results).round(2)
 
             order = [
-                "T-1 Close Plus 15 Ticks",
                 "T-1 Close Full Recovery",
-                "T-1 Close Minus 15 Ticks",
                 "Double Tranche 70/30 (T-1C, T-0L)",
                 "Double Tranche 60/40 (T-1C, T-0L)",
             ]
@@ -242,18 +246,6 @@ def render_app():
             df["Method"] = pd.Categorical(df["Method"], categories=order, ordered=True)
             df = df.sort_values("Method").reset_index(drop=True)
             df.index = df.index + 1
-
-            # results_df["Method"] = [
-            #     "T-1 Close Full Recovery",
-            #     "T-1 Close Minus 15 Ticks",
-            #     "T-1 Close Plus 15 Ticks",
-            #     "Double Tranche 60/40 (T-1C, T-0L)",
-            #     "Double Tranche 70/30 (T-1C, T-0L)",
-            # ]
-            # st.session_state.summary_df = pd.DataFrame(results)
-
-            # results_df = results_df.sort_index().reset_index(drop=True)
-            # st.session_state.summary_df = results_df
             st.session_state.summary_df = df
 
         except Exception as e:
