@@ -48,8 +48,6 @@ def render_app():
     from functions import backtest_massive as backtest, get_data_massive as get_data
     from pathlib import Path
 
-    st.set_page_config(page_title="Dividend Analytics", page_icon="📈")
-
     st.markdown(
         """
     <style>
