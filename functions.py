@@ -795,11 +795,10 @@ def backtest_massive(method, per_day, intraday_data, div_data):
     events = pd.merge(per_day, div_data, left_index=True, right_index=True, how='left').dropna(subset=['is_dividend'])
     def get_recovery_time_massive(events):
         recovery_times = []
-        for event_date in events.index:
-            event = events.loc[event_date]
+        for event_date, event in events.iterrows():
             entry_price = event[entry_price_pairs[method]]
-            start_date= event.name.date()
-            end_date= event['end_window_date'].date()
+            start_date = event_date.date()
+            end_date = event['end_window_date'].date()
             window_date = intraday_data.loc[start_date:end_date]
             window_date['is_recover'] = window_date.close > entry_price
             recovery_time = (window_date.resample('D').sum().mean().round(2).is_recover)
@@ -821,12 +820,11 @@ def backtest_massive(method, per_day, intraday_data, div_data):
         "70/30": "entry_price_7030",
     }
 
-    for event_date in events.index:
-        event = events.loc[event_date]
+    for event_date, event in events.iterrows():
         entry_price = event[entry_price_pairs[method]]
 
         # Window slice: take next 5 trading days from event date
-        window_data = per_day.loc[event.name:].head(5).copy()
+        window_data = per_day.loc[event_date:].head(5).copy()
 
         # Recovery test = High ≥ Entry
         window_data["is_recover"] = window_data["high"] > entry_price
