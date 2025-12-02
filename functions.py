@@ -772,7 +772,7 @@ def get_div_massive(symbol, API_KEY=MASSIVE_API_KEY):
 
 
 
-def get_data_massive(symbol, year, start=None, end=None, recovery_window=1):
+def get_data_massive(symbol, year, start=None, end=None, recovery_window=5):
     
     if year:
         start = year_delta(year)
@@ -792,7 +792,7 @@ def get_data_massive(symbol, year, start=None, end=None, recovery_window=1):
 
 
 def backtest_massive(method, per_day, intraday_data, div_data):
-    events = pd.merge(per_day, div_data, left_index=True, right_index=True, how='left').dropna(subset=['is_dividend'])
+    events = pd.merge(per_day, div_data, left_index=True, right_index=True, how='left').dropna(subset=['is_dividend', 'end_window_date'])
     def get_recovery_time_massive(events):
         recovery_times = []
         for event_date, event in events.iterrows():
@@ -822,9 +822,12 @@ def backtest_massive(method, per_day, intraday_data, div_data):
 
     for event_date, event in events.iterrows():
         entry_price = event[entry_price_pairs[method]]
+        end_window = event["end_window_date"]
 
-        # Window slice: take next 5 trading days from event date
-        window_data = per_day.loc[event_date:].head(5).copy()
+        # Window slice: respect recovery window end date
+        window_data = per_day.loc[event_date:end_window].copy()
+        if window_data.empty:
+            continue
 
         # Recovery test = High ≥ Entry
         window_data["is_recover"] = window_data["high"] > entry_price
@@ -851,8 +854,11 @@ def backtest_massive(method, per_day, intraday_data, div_data):
 
         highs = window_data['high'].head(5)
         is_rec_days = (highs > entry_price).tolist()
+        # pad to always keep 5 trading-day slots (T0-T4) for consistent recovery columns
         if len(is_rec_days) < 5:
-            is_rec_days.extend([np.nan] * (5 - len(is_rec_days)))
+            is_rec_days.extend([False] * (5 - len(is_rec_days)))
+        else:
+            is_rec_days = is_rec_days[:5]
         cummulative_recovery_list.append(is_rec_days)
         
         # Store results

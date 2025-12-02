@@ -212,7 +212,7 @@ def render_app():
             #     start=start_date,
             #     end=end_date,
             # )
-            intraday_data, per_day, div_data = get_data(symbol=symbol, year=year, start=start_date, end=end_date)
+            intraday_data, per_day, div_data = get_data(symbol=symbol, year=year, start=start_date, end=end_date, recovery_window=recovery_window)
             
             for i, method in enumerate(methods, 1):
                 progress_bar.progress(
