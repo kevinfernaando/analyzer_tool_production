@@ -782,6 +782,7 @@ def get_data_massive(symbol, year, start=None, end=None, recovery_window=5):
     div_data = get_div_massive(symbol=symbol)
     per_day['entry_date'] = pd.to_datetime(per_day.index.to_series().shift(1))
     per_day["entry_price_t_1"] = per_day["close"].shift(1)
+    per_day["entry_price_997"] = 0.997 * per_day["close"].shift(1)
     per_day["entry_price_6040"] = 0.6 * per_day["close"].shift(1) + 0.4 * per_day["low"]
     per_day["entry_price_7030"] = 0.7 * per_day["close"].shift(1) + 0.3 * per_day["low"]
     per_day["end_window_date"] = per_day.index.to_series().shift(-recovery_window)
@@ -816,6 +817,7 @@ def backtest_massive(method, per_day, intraday_data, div_data):
 
     entry_price_pairs = {
         "t-1": "entry_price_t_1",
+        't-1_997': 'entry_price_997',
         "60/40": "entry_price_6040",
         "70/30": "entry_price_7030",
     }
