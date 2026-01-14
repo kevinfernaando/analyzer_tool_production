@@ -4,6 +4,8 @@ import pandas as pd
 import streamlit as st
 import streamlit_authenticator as stauth
 from functions import backtest_massive as backtest, get_data_massive as get_data
+import traceback  
+
 
 # ---------- Page Config ----------
 st.set_page_config(page_title="Dividend Analytics", page_icon="📈", layout="wide")
@@ -192,8 +194,11 @@ def render_app():
             st.session_state.summary_df = results_df.sort_values("Method").reset_index(drop=True)
             st.session_state.error_msg = None
             
+        # except Exception as e:
+        #     st.session_state.error_msg = f"Analysis Error: {str(e)}"
         except Exception as e:
-            st.session_state.error_msg = f"Analysis Error: {str(e)}"
+            st.session_state.error_msg = traceback.format_exc()
+
         finally:
             st.session_state.running = False
             st.rerun()
