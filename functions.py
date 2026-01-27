@@ -300,6 +300,7 @@ def backtest(symbol, method, recovery_window, plot=True, year=1, start=None, end
         "t-1+15": "entry_price_t_1",
         "60/40": "entry_price_6040",
         "70/30": "entry_price_7030",
+        "t-1_997": "entry_price_997",
     }
 
     for event_date in events.index:
@@ -813,6 +814,7 @@ def backtest_massive(method, per_day, intraday_data, div_data):
     days_to_overrun_list = []
     trading_session_list = []
     cummulative_recovery_list = []
+    loss_delta_pct_list = []
     
 
     entry_price_pairs = {
@@ -853,6 +855,17 @@ def backtest_massive(method, per_day, intraday_data, div_data):
             recovery_days = np.nan
             overrun = np.nan
             days_to_overrun = np.nan
+            
+            # Loss Delta % for FAILED recoveries only:
+            best_price = window_data["high"].max()
+            # percent short of recovery benchmark (entry_price)
+            loss_delta_pct = np.round(100 * (entry_price - best_price) / entry_price, 2)
+            # guard: if data weirdly exceeds benchmark, don't go negative
+            loss_delta_pct = max(loss_delta_pct, 0.0)
+            loss_delta_pct_list.append(loss_delta_pct)
+            
+            
+        
 
         highs = window_data['high'].head(5)
         is_rec_days = (highs > entry_price).tolist()
@@ -869,7 +882,9 @@ def backtest_massive(method, per_day, intraday_data, div_data):
         overrun_list.append(overrun)
         days_to_overrun_list.append(days_to_overrun)
 
-
+    avg_loss_delta_pct = (
+        np.round(np.mean(loss_delta_pct_list), 2) if len(loss_delta_pct_list) > 0 else np.nan
+    )
     # ---- Summary ----
     total_events = len(events)
     rec_events = sum(is_recover_list)
@@ -923,6 +938,7 @@ def backtest_massive(method, per_day, intraday_data, div_data):
         "Avg Minutes Above Recovery": avg_recovery_times,
         "Median Overrun %": med_overrun,
         "Avg Days to Overrun": avg_days_to_overrun,
+        "Loss Delta %": avg_loss_delta_pct,
     }
     result.update(final_trading_session)
 

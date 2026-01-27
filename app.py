@@ -5,6 +5,7 @@ import streamlit as st
 import streamlit_authenticator as stauth
 from functions import backtest_massive as backtest, get_data_massive as get_data
 import traceback  
+from datetime import datetime
 
 
 # ---------- Page Config ----------
@@ -139,9 +140,28 @@ def render_app():
     with r2c1:
         year = st.number_input("Years of Backtest", min_value=1, max_value=25, value=1, disabled=st.session_state.year_disabled or st.session_state.running)
     with r2c2:
-        start_date = st.date_input("Start Date", value=st.session_state.start_date, key="start_date", format="DD/MM/YYYY", on_change=on_start_date_change, disabled=st.session_state.running)
+        start_date = st.date_input(
+            "Start Date",
+            value=st.session_state.start_date,
+            key="start_date",
+            format="DD/MM/YYYY",
+            min_value=MIN_DATE,
+            max_value=MAX_DATE,
+            on_change=on_start_date_change,
+            disabled=st.session_state.running,
+        )
+        # start_date = st.date_input("Start Date", value=st.session_state.start_date, key="start_date", format="DD/MM/YYYY", on_change=on_start_date_change, disabled=st.session_state.running)
     with r2c3:
-        end_date = st.date_input("End Date", value=st.session_state.end_date, key="end_date", format="DD/MM/YYYY", disabled=st.session_state.running)
+        end_date = st.date_input(
+            "End Date",
+            value=st.session_state.end_date,
+            key="end_date",
+            format="DD/MM/YYYY",
+            min_value=MIN_DATE,
+            max_value=MAX_DATE,
+            disabled=st.session_state.running,
+        )
+        # end_date = st.date_input("End Date", value=st.session_state.end_date, key="end_date", format="DD/MM/YYYY", disabled=st.session_state.running)
     with r2c4:
         # Reset is now a standard secondary button
         st.button("Reset", on_click=on_reset, type="secondary", use_container_width=True)
@@ -222,6 +242,11 @@ auth_status = st.session_state.get("authentication_status")
 username    = st.session_state.get("username")
 name        = st.session_state.get("name")
 
+from datetime import date
+
+MIN_DATE = date(1900, 1, 1)  # or date(1970, 1, 1)
+MAX_DATE = datetime.today().date()
+
 if auth_status is False:
     st.error("Invalid email or password.")
 elif auth_status is None:
@@ -234,5 +259,5 @@ elif auth_status:
         st.caption(username)
         st.write("---")
         auth.logout("Logout", "sidebar")
-    
+
     render_app()
