@@ -817,6 +817,7 @@ def backtest_massive(method, per_day, intraday_data, div_data):
     trading_session_list = []
     cummulative_recovery_list = []
     loss_delta_pct_list = []
+    days_to_loss_delta_list = []
     
 
     entry_price_pairs = {
@@ -870,6 +871,10 @@ def backtest_massive(method, per_day, intraday_data, div_data):
             overrun = np.nan
             days_to_overrun = np.nan
 
+            best_pos = int(highs.reset_index(drop=True).idxmax()) if highs.notna().any() else None
+            days_to_loss_delta = float(best_pos) if best_pos is not None else np.nan
+            days_to_loss_delta_list.append(days_to_loss_delta)
+
             # --- Loss Delta % (CLIENT DEFINITION) ---
             # "How close price came to recovery benchmark" for FAILED recoveries only.
             # Use BEST price achieved in window = max(high), then compute shortfall vs entry.
@@ -882,7 +887,7 @@ def backtest_massive(method, per_day, intraday_data, div_data):
                 loss_delta_pct = max(loss_delta_pct, 0.0)  # clamp, avoid negative due to noise
 
             loss_delta_pct_list.append(loss_delta_pct)
-
+        
         # --- your existing T0-T4 recovery list logic (NA safe) ---
         first5_highs = pd.to_numeric(window_data["high"].head(5), errors="coerce")
         is_rec_days = (first5_highs > entry).fillna(False).tolist()
@@ -904,6 +909,12 @@ def backtest_massive(method, per_day, intraday_data, div_data):
         np.round(np.nanmean(loss_delta_pct_list), 2)
         if len(loss_delta_pct_list) > 0 else np.nan
     )
+    
+    avg_days_to_loss_delta = (
+        np.round(np.nanmean(days_to_loss_delta_list), 2)
+        if len(days_to_loss_delta_list) > 0 else np.nan
+    )
+
 
     total_events = processed_events
     rec_events = int(np.nansum(is_recover_list))
@@ -959,6 +970,8 @@ def backtest_massive(method, per_day, intraday_data, div_data):
         "Median Overrun %": med_overrun,
         "Avg Days to Overrun": avg_days_to_overrun,
         "Loss Delta %": avg_loss_delta_pct,
+        "Avg Days To Loss Delta": avg_days_to_loss_delta,
+
     }
     result.update(final_trading_session)
 
