@@ -859,7 +859,11 @@ def backtest_massive(method, per_day, intraday_data, div_data):
             # Loss Delta % for FAILED recoveries only:
             best_price = window_data["high"].max()
             # percent short of recovery benchmark (entry_price)
-            loss_delta_pct = np.round(100 * (entry_price - best_price) / entry_price, 2)
+            num = 100 * (entry_price - best_price) / entry_price
+
+            # Convert pandas NA → numpy nan, then round safely
+            loss_delta_pct = np.round(pd.to_numeric(num, errors="coerce"), 2)
+            # loss_delta_pct = np.round(100 * (entry_price - best_price) / entry_price, 2)
             # guard: if data weirdly exceeds benchmark, don't go negative
             loss_delta_pct = max(loss_delta_pct, 0.0)
             loss_delta_pct_list.append(loss_delta_pct)
