@@ -807,6 +807,8 @@ def backtest_massive(method, per_day, intraday_data, div_data):
             recovery_times.append(recovery_time)
         return np.round(np.mean(recovery_times), 2)
 
+    processed_events = 0
+    failed_events = 0
 
     is_recover_list = []
     recovery_days_list = []
@@ -833,53 +835,65 @@ def backtest_massive(method, per_day, intraday_data, div_data):
         if window_data.empty:
             continue
 
-        # Recovery test = High ≥ Entry
-        window_data["is_recover"] = window_data["high"] > entry_price
-        is_recover = window_data["is_recover"].any()
+        processed_events += 1
+
+        # --- ensure numeric highs (pd.NA safe) ---
+        highs = pd.to_numeric(window_data["high"], errors="coerce")
+
+        # Recovery test = High > Entry (your current definition)
+        entry = pd.to_numeric(entry_price, errors="coerce")
+        window_data["is_recover"] = highs > entry
+        is_recover = bool(window_data["is_recover"].any())
 
         if is_recover:
             recovery_days = window_data.reset_index().is_recover.idxmax()
-            peak_ts = window_data.high.idxmax()
+
+            peak_ts = highs.idxmax()
             peak_date = peak_ts.date()
-            peak_price = window_data.high.max()
-            overrun = np.round(100 * (peak_price - entry_price) / entry_price, 2)
+            peak_price = highs.max()
+
+            if pd.isna(entry) or entry == 0 or pd.isna(peak_price):
+                overrun = np.nan
+            else:
+                overrun = np.round(100 * (peak_price - entry) / entry, 2)
 
             days_to_overrun = window_data.reset_index().high.idxmax()
-            # slice intraday data by date string to get that day's bars
+
             peak_day_data = intraday_data.loc[str(peak_date)]
             peak_time = peak_day_data.high.idxmax()
             trading_session = get_trading_session(str(peak_time))
             trading_session_list.append(trading_session)
 
         else:
+            failed_events += 1
             recovery_days = np.nan
             overrun = np.nan
             days_to_overrun = np.nan
-            
-            # Loss Delta % for FAILED recoveries only:
-            best_price = window_data["high"].max()
-            # percent short of recovery benchmark (entry_price)
-            num = 100 * (entry_price - best_price) / entry_price
 
-            # Convert pandas NA → numpy nan, then round safely
-            loss_delta_pct = np.round(pd.to_numeric(num, errors="coerce"), 2)
-            # loss_delta_pct = np.round(100 * (entry_price - best_price) / entry_price, 2)
-            # guard: if data weirdly exceeds benchmark, don't go negative
-            loss_delta_pct = max(loss_delta_pct, 0.0)
+            # --- Loss Delta % (CLIENT DEFINITION) ---
+            # "How close price came to recovery benchmark" for FAILED recoveries only.
+            # Use BEST price achieved in window = max(high), then compute shortfall vs entry.
+            best_price = highs.max()
+
+            if pd.isna(entry) or entry == 0 or pd.isna(best_price):
+                loss_delta_pct = np.nan
+            else:
+                loss_delta_pct = round(100 * (entry - best_price) / entry, 2)
+                loss_delta_pct = max(loss_delta_pct, 0.0)  # clamp, avoid negative due to noise
+
             loss_delta_pct_list.append(loss_delta_pct)
-            
-            
-        
 
-        highs = window_data['high'].head(5)
-        is_rec_days = (highs > entry_price).tolist()
-        # pad to always keep 5 trading-day slots (T0-T4) for consistent recovery columns
+        # --- your existing T0-T4 recovery list logic (NA safe) ---
+        first5_highs = pd.to_numeric(window_data["high"].head(5), errors="coerce")
+        is_rec_days = (first5_highs > entry).fillna(False).tolist()
+
         if len(is_rec_days) < 5:
             is_rec_days.extend([False] * (5 - len(is_rec_days)))
         else:
             is_rec_days = is_rec_days[:5]
+
         cummulative_recovery_list.append(is_rec_days)
-        
+
         # Store results
         is_recover_list.append(is_recover)
         recovery_days_list.append(recovery_days)
@@ -887,11 +901,13 @@ def backtest_massive(method, per_day, intraday_data, div_data):
         days_to_overrun_list.append(days_to_overrun)
 
     avg_loss_delta_pct = (
-        np.round(np.mean(loss_delta_pct_list), 2) if len(loss_delta_pct_list) > 0 else np.nan
+        np.round(np.nanmean(loss_delta_pct_list), 2)
+        if len(loss_delta_pct_list) > 0 else np.nan
     )
-    # ---- Summary ----
-    total_events = len(events)
-    rec_events = sum(is_recover_list)
+
+    total_events = processed_events
+    rec_events = int(np.nansum(is_recover_list))
+
 
     recovery_pct = np.round(
         100 * rec_events / total_events if total_events > 0 else 0, 2
