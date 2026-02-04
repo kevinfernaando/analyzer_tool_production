@@ -757,6 +757,20 @@ def get_hist_massive(symbol, start, API_KEY=MASSIVE_API_KEY, multiplier=1, end=N
 
 
 
+# def get_div_massive(symbol, API_KEY=MASSIVE_API_KEY):
+#     client = RESTClient(API_KEY)
+#     dividends = list(
+#         client.list_dividends(
+#             ticker=symbol, order="asc", limit=1000, sort="ex_dividend_date"
+#         )
+#     )
+#     if not dividends:
+#         raise ValueError(f"No dividend data returned for {symbol}")
+
+#     df = pd.DataFrame(dividends).set_index('ex_dividend_date')[['id']].rename(columns={'id': 'is_dividend'})
+#     df.index = pd.to_datetime(df.index)
+#     return df
+
 def get_div_massive(symbol, API_KEY=MASSIVE_API_KEY):
     client = RESTClient(API_KEY)
     dividends = list(
@@ -764,10 +778,19 @@ def get_div_massive(symbol, API_KEY=MASSIVE_API_KEY):
             ticker=symbol, order="asc", limit=1000, sort="ex_dividend_date"
         )
     )
-    if not dividends:
-        raise ValueError(f"No dividend data returned for {symbol}")
 
-    df = pd.DataFrame(dividends).set_index('ex_dividend_date')[['id']].rename(columns={'id': 'is_dividend'})
+    # ✅ Graceful behavior: no dividends -> return empty DataFrame (do not raise)
+    if not dividends:
+        df_empty = pd.DataFrame({"is_dividend": []})
+        df_empty.index = pd.to_datetime([])
+        df_empty.index.name = "ex_dividend_date"
+        return df_empty
+
+    df = (
+        pd.DataFrame(dividends)
+        .set_index("ex_dividend_date")[["id"]]
+        .rename(columns={"id": "is_dividend"})
+    )
     df.index = pd.to_datetime(df.index)
     return df
 
