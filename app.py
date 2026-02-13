@@ -129,6 +129,7 @@ def render_app():
 
     def on_reset():
         # Clear specific keys
+        st.session_state.running = False  # ✅ stop analysis loop
         st.session_state.start_date = None
         st.session_state.end_date = None
         st.session_state.year_disabled = False
@@ -185,13 +186,25 @@ def render_app():
         progress_bar = st.progress(0, text="Analyzing data...")
         try:
             eff_year = None if st.session_state.year_disabled else year
-            intraday_data, per_day, div_data = get_data(
-                symbol=symbol, 
-                year=eff_year, 
-                start=start_date, 
-                end=end_date, 
-                recovery_window=recovery_window
-            )
+            try:
+                intraday_data, per_day, div_data = get_data(
+                    symbol=symbol,
+                    year=eff_year,
+                    start=start_date,
+                    end=end_date,
+                    recovery_window=recovery_window
+                )
+            except ValueError as e:
+                msg = str(e)
+                if "No aggregate data returned" in msg:
+                    st.info(
+                        f"ℹ️ Massive returned no price data for **{symbol}** in the selected period. "
+                        "This usually means the ticker isn’t covered by Massive (or there’s no data for that date range). "
+                        "Try another ticker or widen the date range."
+                    )
+                    st.stop()
+                else:
+                    raise
             start_ts = pd.Timestamp(start_date) if start_date else None
             if div_data.empty or (start_ts and div_data.index.min() > start_ts):
                 st.info(
@@ -225,14 +238,14 @@ def render_app():
         #     st.session_state.error_msg = f"Analysis Error: {str(e)}"
         except Exception as e:
             st.session_state.error_msg = traceback.format_exc()
-
+            
         finally:
             st.session_state.running = False
             st.rerun()
 
     # --- Results Display ---
-    if st.session_state.error_msg:
-        st.error(st.session_state.error_msg)
+    # if st.session_state.error_msg:
+    #     st.error(st.session_state.error_msg)
 
     if st.session_state.summary_df is not None:
         st.write("---")
