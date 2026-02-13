@@ -192,7 +192,8 @@ def render_app():
                 end=end_date, 
                 recovery_window=recovery_window
             )
-            if div_data.empty or div_data.index.min() > start_date:
+            start_ts = pd.Timestamp(start_date) if start_date else None
+            if div_data.empty or (start_ts and div_data.index.min() > start_ts):
                 st.info(
                     f"ℹ️ No dividend events were returned for **{symbol}** from Massive in the selected period. "
                     "This usually means the stock doesn’t pay dividends or the data source has no dividend coverage."
@@ -230,8 +231,8 @@ def render_app():
             st.rerun()
 
     # --- Results Display ---
-    # if st.session_state.error_msg:
-    #     st.error(st.session_state.error_msg)
+    if st.session_state.error_msg:
+        st.error(st.session_state.error_msg)
 
     if st.session_state.summary_df is not None:
         st.write("---")
