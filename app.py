@@ -213,12 +213,17 @@ def render_app():
                 )
                 st.stop()
             
-            methods = ["t-1", 't-1_997', "60/40", "70/30"]
+            # methods = ["t-1", 't-1_997', "60/40", "70/30", "t-1_1005", "t-1_10033", "t-1_0999", "t-1_0997"]
+            methods = ["t-1",  "60/40", "70/30", "t-1_1005", "t-1_10033", "t-1_0999", "t-1_0997"]
             method_names = {
                 "t-1": "T-1 Close Full Recovery",
-                "t-1_997": "T-1 Close Full Recovery x 0.997",
+                # "t-1_997": "T-1 Close Full Recovery x 0.997",
                 "60/40": "Double Tranche 60/40 (T-1C, T-0L)",
-                "70/30": "Double Tranche 70/30 (T-1C, T-0L)"
+                "70/30": "Double Tranche 70/30 (T-1C, T-0L)",
+                "t-1_1005": "T-1 Close Full Recovery x 1.005",
+                "t-1_10033": "T-1 Close Full Recovery x 1.0033",
+                "t-1_0999": "T-1 Close Full Recovery x 0.999",
+                "t-1_0997": "T-1 Close Full Recovery x 0.997"
             }
             
             results = []
@@ -229,23 +234,23 @@ def render_app():
                 results.append(res)
             
             results_df = pd.DataFrame(results).round(2)
-            order = ["T-1 Close Full Recovery", "T-1 Close Full Recovery x 0.997", "Double Tranche 70/30 (T-1C, T-0L)", "Double Tranche 60/40 (T-1C, T-0L)"]
+            order = ["T-1 Close Full Recovery", "T-1 Close Full Recovery x 0.997", "Double Tranche 70/30 (T-1C, T-0L)", "Double Tranche 60/40 (T-1C, T-0L)", "T-1 Close Full Recovery x 1.005", "T-1 Close Full Recovery x 1.0033", "T-1 Close Full Recovery x 0.999"]
             results_df["Method"] = pd.Categorical(results_df["Method"], categories=order, ordered=True)
             st.session_state.summary_df = results_df.sort_values("Method").reset_index(drop=True)
             st.session_state.error_msg = None
             
-        # except Exception as e:
-        #     st.session_state.error_msg = f"Analysis Error: {str(e)}"
         except Exception as e:
-            st.session_state.error_msg = traceback.format_exc()
+            st.session_state.error_msg = f"Analysis Error: {str(e)}"
+        # except Exception as e:
+        #     st.session_state.error_msg = traceback.format_exc()
             
         finally:
             st.session_state.running = False
             st.rerun()
 
     # --- Results Display ---
-    # if st.session_state.error_msg:
-    #     st.error(st.session_state.error_msg)
+    if st.session_state.error_msg:
+        st.error(st.session_state.error_msg)
 
     if st.session_state.summary_df is not None:
         st.write("---")
