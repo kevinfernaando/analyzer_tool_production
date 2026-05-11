@@ -45,7 +45,7 @@ def render_app():
     # st.title("Dividend Analytics 📈")
     # st.write("You are logged in. Put the existing app here.")
     import pandas as pd
-    from functions import backtest_massive as backtest, get_data_massive as get_data
+    from functions2 import backtest_massive as backtest, get_data_massive as get_data
     from pathlib import Path
 
     st.markdown(

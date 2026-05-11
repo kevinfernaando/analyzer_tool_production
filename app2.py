@@ -3,7 +3,7 @@ import yaml
 import pandas as pd
 import streamlit as st
 import streamlit_authenticator as stauth
-from functions import backtest_massive as backtest, get_data_massive as get_data
+from functions2 import backtest_massive as backtest, get_data_massive as get_data
 import traceback  
 from datetime import datetime
 
@@ -152,6 +152,7 @@ def render_app():
             on_change=on_start_date_change,
             disabled=st.session_state.running,
         )
+        # start_date = st.date_input("Start Date", value=st.session_state.start_date, key="start_date", format="DD/MM/YYYY", on_change=on_start_date_change, disabled=st.session_state.running)
     with r2c3:
         end_date = st.date_input(
             "End Date",
@@ -162,6 +163,7 @@ def render_app():
             max_value=MAX_DATE,
             disabled=st.session_state.running,
         )
+        # end_date = st.date_input("End Date", value=st.session_state.end_date, key="end_date", format="DD/MM/YYYY", disabled=st.session_state.running)
     with r2c4:
         # Reset is now a standard secondary button
         st.button("Reset", on_click=on_reset, type="secondary", use_container_width=True)
@@ -212,10 +214,11 @@ def render_app():
                 )
                 st.stop()
             
-            # --- FIXED METHODS & UNIQUE CATEGORICAL FIX ---
-            methods = ["t-1", "60/40", "70/30", "t-1_1005", "t-1_10033", "t-1_0999", "t-1_0997"]
+            # methods = ["t-1", 't-1_997', "60/40", "70/30", "t-1_1005", "t-1_10033", "t-1_0999", "t-1_0997"]
+            methods = ["t-1",  "60/40", "70/30", "t-1_1005", "t-1_10033", "t-1_0999", "t-1_0997"]
             method_names = {
                 "t-1": "T-1 Close Full Recovery",
+                # "t-1_997": "T-1 Close Full Recovery x 0.997",
                 "60/40": "Double Tranche 60/40 (T-1C, T-0L)",
                 "70/30": "Double Tranche 70/30 (T-1C, T-0L)",
                 "t-1_1005": "T-1 Close Full Recovery x 1.005",
@@ -232,23 +235,15 @@ def render_app():
                 results.append(res)
             
             results_df = pd.DataFrame(results).round(2)
-            # Make sure order strings exactly match the values in method_names and are completely unique
-            order = [
-                "T-1 Close Full Recovery", 
-                "T-1 Close Full Recovery x 0.997", 
-                "Double Tranche 70/30 (T-1C, T-0L)", 
-                "Double Tranche 60/40 (T-1C, T-0L)", 
-                "T-1 Close Full Recovery x 1.005", 
-                "T-1 Close Full Recovery x 1.0033", 
-                "T-1 Close Full Recovery x 0.999"
-            ]
+            order = ["T-1 Close Full Recovery", "T-1 Close Full Recovery x 0.997", "Double Tranche 70/30 (T-1C, T-0L)", "Double Tranche 60/40 (T-1C, T-0L)", "T-1 Close Full Recovery x 1.005", "T-1 Close Full Recovery x 1.0033", "T-1 Close Full Recovery x 0.999"]
             results_df["Method"] = pd.Categorical(results_df["Method"], categories=order, ordered=True)
             st.session_state.summary_df = results_df.sort_values("Method").reset_index(drop=True)
             st.session_state.error_msg = None
             
         except Exception as e:
             st.session_state.error_msg = f"Analysis Error: {str(e)}"
-            # st.session_state.error_msg = traceback.format_exc()
+        # except Exception as e:
+        #     st.session_state.error_msg = traceback.format_exc()
             
         finally:
             st.session_state.running = False
